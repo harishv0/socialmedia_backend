@@ -35,7 +35,7 @@ import facebook.backend.Service.UserService;
 
 @RestController
 @RequestMapping("api/post")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://harishmedia.netlify.app")
 public class PostController {
     @Autowired
     private PostService postService;
