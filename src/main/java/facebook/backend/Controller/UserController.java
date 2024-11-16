@@ -101,6 +101,7 @@ public class UserController {
                 System.out.println(body.getName());
                 body.setFollowers(new ArrayList<>());
                 body.setFollowing(new ArrayList<>());
+                body.setNotifications(new ArrayList<>());
                 body.setOnline(false);
                 body.setLastseen(new String());
                 body.setSavepost(new ArrayList<>());
