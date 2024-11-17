@@ -1,6 +1,8 @@
 package facebook.backend.Controller;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.apache.catalina.mbeans.UserMBean;
@@ -311,7 +313,8 @@ public class UserController {
         Optional<User> user = userService.getUserById(id);
         if(user != null){
             user.get().setOnline(false);
-            user.get().setLastseen(LocalDateTime.now().toString());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            user.get().setLastseen(LocalDateTime.now(ZoneOffset.UTC).format(formatter));
             userService.save(user.get());
             simpMessagingTemplate.convertAndSend("/topic/userstatus", user);
             return ResponseEntity.ok(new ApiResponse<>(true, "LogOut SuccessFully", user.get()));

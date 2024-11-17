@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -200,7 +202,8 @@ public class PostController {
             com.setUserId(userId);
             com.setUser(user.get());
             com.setComment(comment);
-            com.setDateTime(LocalDateTime.now().toString());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            com.setDateTime(LocalDateTime.now(ZoneOffset.UTC).format(formatter));
             currentPost.getComment().add(com);
             postService.save(currentPost);
             simpMessagingTemplate.convertAndSend("/topic/comments", com);
@@ -213,7 +216,7 @@ public class PostController {
             }
             Notifications notifications = new Notifications();
             notifications.setNotificationId(UUID.randomUUID().toString());
-            notifications.setDateTime(LocalDateTime.now().toString());
+            notifications.setDateTime(LocalDateTime.now(ZoneOffset.UTC).format(formatter));
             notifications.setUserId(user.get().getId().toString());
             notifications.setPostId(postId);
             notifications.setNotificationMessage(user.get().getName() + " Commented on your post");
