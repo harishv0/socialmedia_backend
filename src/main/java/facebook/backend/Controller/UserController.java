@@ -324,26 +324,40 @@ public class UserController {
     }
 
     @PostMapping("/savepost/{userId}/{postId}")
-    public ResponseEntity<ApiResponse<User>> getMethodName(@PathVariable String userId, @PathVariable String postId) {
+    public ResponseEntity<ApiResponse<User>> saveOrUnsavePost(
+            @PathVariable String userId, 
+            @PathVariable String postId) {
+
         Optional<User> user = userService.getUserById(userId);
         Post post = postService.getPostByPostId(postId);
-        System.out.println("user posts :------"+ user.get().getSavepost());
-        if(user != null){
-            if (user.get().getSavepost() == null) {
-                user.get().setSavepost(new ArrayList<>()); 
-            }
-            if(!user.get().getSavepost().contains(post)) {
-                System.out.println("Entered " + user.get().getSavepost().contains(post));
-                user.get().getSavepost().add(post);
-                userService.save(user);
-                return ResponseEntity.ok(new ApiResponse<>(true, "Post Saved", null));
-            }else{
-                user.get().getSavepost().remove(post);
-                userService.save(user);
-                return ResponseEntity.ok(new ApiResponse<>(false, "Post UnSaved", null));
-            }
-        }else{
-            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "not Saved", null));
+
+        if (user.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "User not found", null));
+        }
+
+        if (post == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Post not found", null));
+        }
+
+        User foundUser = user.get();
+
+        if (foundUser.getSavepost() == null) {
+            foundUser.setSavepost(new ArrayList<>());
+        }
+
+        List<Post> savedPosts = foundUser.getSavepost();
+
+        if (savedPosts.stream().anyMatch(savedPost -> savedPost.getPostId().equals(postId))) {
+            // Post exists, remove it
+            savedPosts.removeIf(savedPost -> savedPost.getPostId().equals(postId));
+            userService.save(foundUser);
+            return ResponseEntity.ok(new ApiResponse<>(false, "Post UnSaved", null));
+        } else {
+            // Post does not exist, add it
+            savedPosts.add(post);
+            userService.save(foundUser);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Post Saved", null));
         }
     }
+
 }

@@ -8,9 +8,11 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,21 +165,40 @@ public class PostController {
         }
         
     }
+
+
     @PostMapping("/notifications/{userId}/{notificationId}")
     public ResponseEntity<ApiResponse<User>> markNotificationAsSeen(@PathVariable String userId, @PathVariable String notificationId) {
-        Optional<User> user = userService.getUserById(userId);
-        if (user != null ) {
-            for (Notifications notifi : user.get().getNotifications()) {
-                if(notifi.getNotificationId().equals(notificationId)){
-                    notifi.setSeen(true);
+        try {
+            Optional<User> user = userService.getUserById(userId);
+
+            if (user.isPresent()) {
+                Iterator<Notifications> iterator = user.get().getNotifications().iterator();
+                boolean found = false;
+
+                while (iterator.hasNext()) {
+                    Notifications notifi = iterator.next();
+                    if (notifi.getNotificationId().equals(notificationId)) {
+                        iterator.remove(); // Safe removal
+                        found = true;
+                        break;
+                    }
                 }
+
+                userService.save(user.get());
+                String message = found ? "Removed Successfully" : "Notification not found";
+                return ResponseEntity.ok(new ApiResponse<>(true, message, user.get()));
             }
-            userService.save(user);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Notification marked as seen.", user.get()));
-        } else {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(false, "user not found", null));
+
+            return ResponseEntity.status(HttpStatus.SC_NOT_FOUND).body(new ApiResponse<>(false, "User not found", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An error occurred: " + e.getMessage(), null));
         }
     }
+
+ 
+    
     @GetMapping("/getpostbyid/{postId}")
     public ResponseEntity<Post> getPostByPostId(@PathVariable String postId) {
         Post post = postService.getPostByPostId(postId);
